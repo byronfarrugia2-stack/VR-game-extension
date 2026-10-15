@@ -64,9 +64,9 @@ button:hover{background:var(--c);color:#041014}
 • When you click a note, a panel or anything that opens a window, your mouse is freed so you can use it. When you close it, <b>click once on the room</b> to look around again.<br>
 • Almost nothing here is just decoration. Most things either tell the story or help you solve a puzzle.<br>
 • Remember: <b style="color:#ffd25a">the periodic table is your friend!</b><br>
-• Take your time. You have plenty of it.</div><button id="enterBtn">ENTER THE LAB</button></div>
+• Stuck? Press <b>H</b> for an optional hint. Hints only appear when you ask.<br>• Take your time. You have plenty of it.</div><button id="enterBtn">ENTER THE LAB</button></div>
 <div id="failOverlay" class="overlay"><h1 style="color:#ff5e6c">CONTAINMENT LOST</h1><p>Contamination reached 100%. The outer door seals automatically. Whatever Voss was hiding down here, it stays hidden — and so do you.</p><button onclick="location.reload()">RESTART</button></div>
-<div id="successOverlay" class="overlay"><h1 style="color:#3ddc8a">CONTAINMENT RESTORED</h1><p>Override accepted. The blast door grinds open. You make it out before the seal fails — Voss's notes still burning a hole in your pocket.</p><button onclick="location.reload()">RESTART</button></div>
+<div id="successOverlay" class="overlay"><h1 style="color:#3ddc8a">CONTAINMENT RESTORED</h1><p>You punch in the final code and the exit door hisses open. Cold air and daylight pour in. Behind you, the hallway lights die one by one. Whatever Voss made is still out there — but you are free.</p><button onclick="location.reload()">RESTART</button></div>
 <div id="secretOverlay" class="overlay"><h1 style="color:#ffb020">"SUBJECT 07 RECOGNISED."</h1>
 <p>The lights fade to amber as the containment lasers shut down, not in failure but in acknowledgement. The system isn't unlocking the door for you — <em>Subject 07 is</em>.<br><br>A hidden tag flashes across a terminal: <code>PROFILE MATCH: DONOR-LINEAGE</code>. Subject 07 was stabilised using a genomic scaffold taken from one technician — you.<br><br>Every puzzle you solved was the lab confirming your identity. The door was never meant to keep you out — only everyone else.</p><button onclick="location.reload()">RESTART</button></div>
 
@@ -272,16 +272,16 @@ function startVent(){st.stage='vent';ventA.setAttribute('visible',true);setStage
 const vs=['He','Ne','Ar'];
 function ventClick(n,b){if(st.stage!=='vent')return;st.vent.push(n);b.setAttribute('animation__pr','property:scale;from:1.3 1.3 1.3;to:1 1 1;dur:250');if(n!==vs[st.vent.length-1]){wrong('Incorrect sequence — vent leaking.',8);st.vent=[];return}snd('click');if(st.vent.length===3){snd('success');toast('Vent sealed.');cont(-10);vent.setAttribute('animation__s','property:rotation;to:0 0 0;dur:500');setTimeout(startFinal,700)}}
 function startFinal(){st.stage='final';fin.setAttribute('visible',true);guide.setAttribute('visible',true);setStage('OVERRIDE AVAILABLE','Reach the containment door and complete the override.');setObj('Four sub-systems: hand scan, stabiliser, lasers, terminal PIN. The incident board says where the answers are.');if(st.marked)setTimeout(()=>{st.paused=true;toast('"Subject 07 recognised."');end('#secretOverlay','glitch');},1200)}
-function done(n,b){st.fin[n]=1;b.setAttribute('material','color','#1f9d5c');b.setAttribute('material','emissive','#1f9d5c');toast(n.toUpperCase()+' confirmed.');snd('success');if(Object.values(st.fin).every(Boolean)){const d=$('#world').children;setTimeout(()=>end('#successOverlay','success'),500)}}
+function done(n,b){st.fin[n]=1;b.setAttribute('material','color','#1f9d5c');b.setAttribute('material','emissive','#1f9d5c');toast(n.toUpperCase()+' confirmed.');snd('success');if(Object.values(st.fin).every(Boolean)){const d=$('#world').children;setTimeout(()=>window.HALL?window.HALL.start():end('#successOverlay','success'),500)}}
 function finalOpen(n,b){if(st.stage!=='final'||st.marked||st.fin[n])return;({scan:()=>scanUI(b),stabiliser:()=>stabUI(b),lasers:()=>laserUI(b),code:()=>pinUI(b)})[n]()}
 function scanUI(b){const T=[7,5,3,1,9];let p=[];openM('HAND SCANNER','Touch the panel in the sequence from the security memo.',c=>{const g=document.createElement('div');g.className='grid';for(let i=1;i<=9;i++){const k=btn(i,()=>{p.push(i);if(T[p.length-1]!==i){k.classList.add('wrong');snd('error');cont(2);setTimeout(()=>{g.querySelectorAll('button').forEach(x=>x.className='');p=[]},400);return}k.classList.add('done');if(p.length===5){snd('success');setTimeout(()=>{closeM();done('scan',b)},400)}},'',g)}c.appendChild(g)})}
 function stabUI(b){let v=0;openM('STABILISER PRESSURE','Set the pressure to the value from the maintenance note.',c=>{const d=document.createElement('div');d.className='disp';d.textContent=0;c.appendChild(d);const r=document.createElement('div');r.className='row';btn('-1',()=>{v=(v+9)%10;d.textContent=v},'',r);btn('+1',()=>{v=(v+1)%10;d.textContent=v},'',r);btn('SET',()=>{if(v===6){snd('success');closeM();done('stabiliser',b)}else{snd('error');cont(2);d.classList.add('wrong')}},'',r);c.appendChild(r)})}
 function laserUI(b){const T=[90,270,180],s=[0,0,0];openM('LASER ALIGNMENT','Click a mirror to rotate it 90°. Match the optics note, then confirm.',c=>{const r=document.createElement('div');r.className='row';s.forEach((_,i)=>{const w=document.createElement('div'),m=btn('↑',()=>{s[i]=(s[i]+90)%360;m.style.transform=`rotate(${s[i]}deg)`;l.textContent=s[i]+'°'},'mir',w),l=document.createElement('div');l.className='sub';l.textContent='0°';w.appendChild(l);r.appendChild(w)});c.appendChild(r);const r2=document.createElement('div');r2.className='row';btn('CONFIRM',()=>{if(s.every((v,i)=>v===T[i])){snd('success');closeM();done('lasers',b)}else{snd('error');cont(2);toast('Beam misaligned.')}},'',r2);c.appendChild(r2)})}
 function pinUI(b){let p='';openM('OVERRIDE TERMINAL','ENTER 4-DIGIT ACCESS CODE',c=>{const d=document.createElement('div');d.className='disp';d.textContent='_ _ _ _';c.appendChild(d);const up=w=>{d.textContent=p.padEnd(4,'_').split('').join(' ');d.classList.toggle('wrong',!!w)};const g=document.createElement('div');g.className='grid';[1,2,3,4,5,6,7,8,9,'⌫',0,'↵'].forEach(k=>btn(k,()=>{if(k==='⌫')p=p.slice(0,-1);else if(k==='↵'){if(p==='4172'){closeM();toast('Access granted.');done('code',b)}else{up(1);snd('error');setTimeout(()=>{p='';up()},500)}return}else if(p.length<4)p+=k;up()},'',g));c.appendChild(g)})}
-window.LAB={cont,st,toast,snd,flash,setPower};
+window.LAB={cont,st,toast,snd,flash,setPower,end,openM,closeM,btn,setStage,setObj};
 }
 if(window.AFRAME){
- AFRAME.registerComponent('labcollide',{tick(){const p=this.el.object3D.position,r=this.el.parentNode.object3D.position;p.y=1.6;const bl=(x,z)=>Math.abs(x)>6.5||Math.abs(z)>6.5||BX.some(b=>x>b[0]-.3&&x<b[1]+.3&&z>b[2]-.3&&z<b[3]+.3);if(!this.l){this.l={x:p.x,z:p.z};return}if(bl(p.x+r.x,p.z+r.z)){if(!bl(this.l.x+r.x,p.z+r.z))p.x=this.l.x;else if(!bl(p.x+r.x,this.l.z+r.z))p.z=this.l.z;else{p.x=this.l.x;p.z=this.l.z}}this.l.x=p.x;this.l.z=p.z}});
+ AFRAME.registerComponent('labcollide',{tick(){const p=this.el.object3D.position,r=this.el.parentNode.object3D.position;p.y=1.6;const bl=(x,z)=>{if(window.HO&&z>6.3)return Math.abs(x)>2.15||z>(window.HE||34.4)||(window.HB||[]).some(b=>x>b[0]-.3&&x<b[1]+.3&&z>b[2]-.3&&z<b[3]+.3);return Math.abs(x)>6.5||Math.abs(z)>6.5||BX.some(b=>x>b[0]-.3&&x<b[1]+.3&&z>b[2]-.3&&z<b[3]+.3)};if(!this.l){this.l={x:p.x,z:p.z};return}if(bl(p.x+r.x,p.z+r.z)){if(!bl(this.l.x+r.x,p.z+r.z))p.x=this.l.x;else if(!bl(p.x+r.x,this.l.z+r.z))p.z=this.l.z;else{p.x=this.l.x;p.z=this.l.z}}this.l.x=p.x;this.l.z=p.z}});
  const BX=[[-1.5,1.5,-7,-4.3],[-5.5,-1.3,-6.7,-5.0],[-2.4,-1.6,-3.3,-2.7],[-1.1,1.1,-.1,1.1],[-7,-6.2,-.6,1.5],[-7,-6.2,-6.3,-5.2],[3.1,5.9,-6.6,-5.2],[6.0,7,.3,2.7],[6.1,7,-5.3,-3.9],[6.0,6.6,5.3,5.9],[5.2,5.8,6.3,7],[-7,-5.9,4.6,6.6],[-5.9,-5.2,5.0,5.8]];
  const sc=$('#scene');sc.hasLoaded?boot():sc.addEventListener('loaded',boot);
 }else document.body.insertAdjacentHTML('beforeend','<div class="overlay active"><h1>3D LIBRARY FAILED TO LOAD</h1><p>A-Frame is loaded from cdn.jsdelivr.net — check your ad-blocker, VPN or network filter.</p></div>');
@@ -315,9 +315,9 @@ const endLine={'#failOverlay':'Containment lost.','#successOverlay':'Override ac
 Object.keys(endLine).forEach(id=>{const o=$(id);new MutationObserver(()=>{if(!o.classList.contains('active')||o.dataset.done)return;o.dataset.done=1;
  if(id==='#successOverlay'){const t=Math.round((Date.now()-start)/1000),r=t<600?'S':t<960?'A':t<1500?'B':'C',d=document.createElement('div');d.id='rank';d.textContent=`TIME ${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}  ·  RANK ${r}`;o.insertBefore(d,o.querySelector('button'));if(window.CHIPS&&window.CHIPS()===4)o.querySelector('p').innerHTML+="<br><br><em>You also found all four of Voss's logs. He built Subject 07 from his own DNA, hoping to save his sick daughter, Mia. Someone should tell her the truth.</em>"}}).observe(o,{attributes:true,attributeFilter:['class']})});
 /* contamination: fog thickens, warnings appear */
-const fired={};let lastB=-1;
+const fired={};let lastB=-1,wasD=0;
 setInterval(()=>{const p=parseInt($('#meterPct').textContent)||0,b=Math.floor(p/5);
- if(b!==lastB){lastB=b;sc.setAttribute('fog',`type:exponential;color:${p<50?'#081216':p<75?'#0b1a10':'#240a0e'};density:${(.014+p*.0003).toFixed(4)}`)}
+ if(window.DARK){wasD=1}else if(b!==lastB||wasD){wasD=0;lastB=b;sc.setAttribute('fog',`type:exponential;color:${p<50?'#081216':p<75?'#0b1a10':'#240a0e'};density:${(.014+p*.0003).toFixed(4)}`)}
  [[50,'Contamination is at 50%. Work faster.'],[75,'Danger! Contamination is at 75%.'],[90,'Almost out of time! 90% contaminated.']].forEach(([t,m])=>{if(p>=t&&!fired[t]){fired[t]=1;say(m,5000)}})},400);
 /* quiet background hum */
 const dg=A.createGain(),lp=A.createBiquadFilter();lp.type='lowpass';lp.frequency.value=260;dg.gain.value=.02;[55,55.6].forEach(f=>{const o=A.createOscillator();o.type='sine';o.frequency.value=f;o.connect(lp);o.start()});lp.connect(dg);dg.connect(A.destination);
@@ -353,14 +353,14 @@ mk('a-cone',{rotation:'180 0 0','radius-bottom':.22,'radius-top':0,height:.45,ma
 mk('a-torus',{position:'0 -.4 0',rotation:'90 0 0',radius:.3,'radius-tubular':.02,material:E('#ffd25a',2)},mkr);
 const ml=mk('a-text',{align:'center',width:3.6,color:'#ffe9a0',position:'0 .6 0','look-at':'[camera]'},mkr);
 const put=(x,y,z,t)=>{mkr.removeAttribute('animation');mkr.setAttribute('position',`${x} ${y} ${z}`);mkr.setAttribute('animation',`property:position;from:${x} ${y} ${z};to:${x} ${y+.25} ${z};dir:alternate;loop:true;dur:700;easing:easeInOutSine`);ml.setAttribute('value',t);mkr.setAttribute('visible',true)};
-const MK={'POWER FAILURE':[-6.2,2.7,-2,'POWER SWITCHES'],'SAMPLE UNSTABLE':[-2,2.4,-3,'CLICK THE SAMPLE'],'MIXTURE UNSTABLE':[4.5,2.4,-6.1,'PICK A BOTTLE'],'VENT UNSEALED':[6.2,2.8,-2,'PRESS THE 3 BUTTONS'],'OVERRIDE AVAILABLE':[0,3.3,6.0,'FINISH THE 4 PANELS']};
-const OB={'POWER FAILURE':'STEP 1 of 5 — Turn on the power. Find the sample rack on the LEFT wall and read the vial colours from left to right. Then press the switches with the same coloured dots, in that order. Do not press X.',
-'SAMPLE UNSTABLE':'STEP 2 of 5 — Click the glowing green sample (follow the yellow arrow). Then click a coloured ball on the small table on the left, and click the glowing slot on the machine where it belongs. Each slot shows an element. The colour chart on the back wall tells you which colour matches.',
-'MIXTURE UNSTABLE':'STEP 3 of 5 — The sample woke up and escaped into the vents! To calm the lab, look at the screen on the back wall: it says PINK. On the colour chart, pink means ALKALI METAL. Click the bottle that is an alkali metal.',
-'VENT UNSEALED':'STEP 4 of 5 — Read the note on the RIGHT wall near the vent. Press the three buttons from the lightest element to the heaviest.',
-'OVERRIDE AVAILABLE':'STEP 5 of 5 — Go to the big door at the front. Finish all 4 panels: HAND SCAN, STABILISER, LASERS and TERMINAL. Notes near the door and on the walls tell you what to enter. Stuck? Click the incident board on the left wall.'};
+const MK={'POWER FAILURE':[-6.2,2.7,-2,'POWER SWITCHES'],'SAMPLE UNSTABLE':[-2,2.4,-3,'CLICK THE SAMPLE'],'MIXTURE UNSTABLE':[4.5,2.4,-6.1,'PICK A BOTTLE'],'VENT UNSEALED':[6.2,2.8,-2,'PRESS THE 3 BUTTONS'],'OVERRIDE AVAILABLE':[0,3.3,6.0,'FINISH THE 4 PANELS'],'HALLWAY POWER':[-2.2,3.1,11.5,'FUSE BOX'],'GATE LOCK':[2.2,2.8,26.2,'GATE KEYPAD'],'FINAL EXIT':[1.8,2.8,34.5,'EXIT KEYPAD']};
+const OB={'POWER FAILURE':'STEP 1 of 8 — Turn on the power. Find the sample rack on the LEFT wall and read the vial colours from left to right. Then press the switches with the same coloured dots, in that order. Do not press X.',
+'SAMPLE UNSTABLE':'STEP 2 of 8 — Click the glowing green sample (follow the yellow arrow). Then click a coloured ball on the small table on the left, and click the glowing slot on the machine where it belongs. Each slot shows an element. The colour chart on the back wall tells you which colour matches.',
+'MIXTURE UNSTABLE':'STEP 3 of 8 — The sample woke up and escaped into the vents! To calm the lab, look at the screen on the back wall: it says PINK. On the colour chart, pink means ALKALI METAL. Click the bottle that is an alkali metal.',
+'VENT UNSEALED':'STEP 4 of 8 — Read the note on the RIGHT wall near the vent. Press the three buttons from the lightest element to the heaviest.',
+'OVERRIDE AVAILABLE':'STEP 5 of 8 — Go to the big door at the front. Finish all 4 panels: HAND SCAN, STABILISER, LASERS and TERMINAL. Notes near the door and on the walls tell you what to enter. Stuck? Click the incident board on the left wall.','HALLWAY POWER':'STEP 6 of 8 — The door is open, but the hallway is pitch black! Walk down to the FUSE BOX on the left wall (follow the arrow). Press the fuses in the same order as the coloured lamps on the wall, from top to bottom.','GATE LOCK':'STEP 7 of 8 — The lights are on, but the next gate is locked. Read the BREACH LOG sign on the left wall, then enter the 4-digit code on the gate keypad (right wall).','FINAL EXIT':'STEP 8 of 8 — Almost out! The exit lock needs 3 digits: the atomic numbers of the three elements in the lab sequencer slots, left to right. The chart on the right wall will help.'};
 /* checklist */
-const steps=[['POWER FAILURE','Turn on the power'],['SAMPLE UNSTABLE','Fix the sample'],['MIXTURE UNSTABLE','Pick the right bottle'],['VENT UNSEALED','Seal the vent'],['OVERRIDE AVAILABLE','Open the door']];
+const steps=[['POWER FAILURE','Turn on the power'],['SAMPLE UNSTABLE','Fix the sample'],['MIXTURE UNSTABLE','Pick the right bottle'],['VENT UNSEALED','Seal the vent'],['OVERRIDE AVAILABLE','Open the door'],['HALLWAY POWER','Light the hallway'],['GATE LOCK','Open the gate'],['FINAL EXIT','Escape!']];
 const tl=document.createElement('div');tl.className='box';tl.style.cssText='position:fixed;top:18px;right:18px;z-index:5;pointer-events:none;font-size:12px;line-height:1.8;min-width:200px';document.body.appendChild(tl);
 const draw=c=>{const k=steps.findIndex(x=>x[0]===c);tl.innerHTML='<div style="color:#7fb6c6;letter-spacing:2px;font-size:10px">TASKS</div>'+steps.map((x,i)=>`<div style="color:${i<k?'#2ee58a':i===k?'#ffd25a':'#587480'}">${i<k?'✔':i===k?'▶':'○'} ${x[1]}</div>`).join('')};draw('');
 new MutationObserver(()=>{let s=$('#stageName').textContent;if(s==='!! ANOMALY !!'){mkr.setAttribute('visible',false);draw('MIXTURE UNSTABLE');return}draw(s);if(MK[s])put(...MK[s]);setTimeout(()=>{if(OB[s])$('#objectiveBox').textContent=OB[s]},450)}).observe($('#stageName'),{childList:true,characterData:true,subtree:true});
@@ -553,8 +553,86 @@ let tms=[];
 const pt=[...document.querySelectorAll('a-text')].find(t=>(t.getAttribute('value')||'').startsWith('PERIODIC TABLE OF'));if(pt)pt.setAttribute('value','PERIODIC TABLE — YOUR FRIEND! (use it for the puzzles)');
 const mk=(t,a)=>{const e=document.createElement(t);for(const k in a)e.setAttribute(k,a[k]);W.appendChild(e);return e};
 const fr=[[-4.2,4.33,4.9,.05],[-4.2,2.47,4.9,.05],[-6.62,3.4,.05,1.9],[-1.78,3.4,.05,1.9]].map(([x,y,w,h])=>{const e=mk('a-box',{position:`${x} ${y} -6.93`,width:w,height:h,depth:.04,visible:false,material:'color:#ffd25a;emissive:#ffd25a;emissiveIntensity:2'});e.setAttribute('animation','property:material.emissiveIntensity;dir:alternate;loop:true;from:.4;to:3;dur:900');return e});
-new MutationObserver(()=>{const s=$('#stageName').textContent;tms.forEach(clearTimeout);tms=[];(H[s]||[]).forEach(([sec,m])=>tms.push(setTimeout(()=>{if(!L.st.over&&L.st.stage!=='ended')window.NEXUS('HINT: '+m,10000)},sec*1000)));
+Object.assign(H,{'HALLWAY POWER':[[0,'Look at the three coloured lamps on the left wall, top to bottom. Press the fuses in that colour order.'],[0,'The order is green, blue, red.']],'GATE LOCK':[[0,'The BREACH LOG sign tells you when the alarm started. The clock in Lab 07 stopped at that time.'],[0,'The code is 0314.']],'FINAL EXIT':[[0,'Use the atomic number chart on the right wall. The lab sequencer slots were He, F, Li (left to right).'],[0,'He = 2, F = 9, Li = 3. The code is 293.']]});
+let lvl=0;
+new MutationObserver(()=>{const s=$('#stageName').textContent;tms.forEach(clearTimeout);tms=[];lvl=0;tms.push(setTimeout(()=>{if(!L.st.over&&H[s])window.NEXUS('Stuck? Press H if you want an optional hint.',7000)},150000));
  const on=['SAMPLE UNSTABLE','MIXTURE UNSTABLE','VENT UNSEALED'].includes(s);fr.forEach(e=>e.setAttribute('visible',on))}).observe($('#stageName'),{childList:true,characterData:true,subtree:true});
+addEventListener('keydown',e=>{if(e.code!=='KeyH'||L.st.over)return;const a=H[$('#stageName').textContent];if(!a)return window.NEXUS('No hint needed right now.',3000);window.NEXUS('HINT: '+a[Math.min(lvl,a.length-1)][1],10000);lvl++});
+}})();
+</script>
+
+
+<script>
+(function(){const $=s=>document.querySelector(s);
+const w=setInterval(()=>{if(window.LAB&&window.NEXUS&&$('#world')&&$('#world').children.length>25){clearInterval(w);go()}},300);
+function go(){
+const W=$('#world'),L=window.LAB,sc=$('#scene'),ch=$('#crosshair');
+const fs=W.children[0].getAttribute('material').src,ws=W.children[2].getAttribute('material').src;
+const HW=document.createElement('a-entity');HW.setAttribute('visible',false);W.appendChild(HW);
+const mk=(t,a,p)=>{const e=document.createElement(t);for(const k in a)e.setAttribute(k,a[k]);(p||HW).appendChild(e);return e};
+const M=(c,o)=>`color:${c};roughness:.7;metalness:.2;${o||''}`,E=(c,i)=>`color:${c};emissive:${c};emissiveIntensity:${i||1};roughness:.5`;
+const B=(x,y,z,w,h,d,m,ry,p)=>mk('a-box',{position:`${x} ${y} ${z}`,rotation:`0 ${ry||0} 0`,width:w,height:h,depth:d,material:m},p);
+const T=(v,x,y,z,ry,w,c,p)=>mk('a-text',{value:v,position:`${x} ${y} ${z}`,rotation:`0 ${ry||0} 0`,align:'center',width:w||2,color:c||'#a8d0dc'},p);
+const cl=(e,fn)=>{e.classList.add('clickable');e.addEventListener('click',fn);e.addEventListener('mouseenter',()=>ch.classList.add('hot'));e.addEventListener('mouseleave',()=>ch.classList.remove('hot'));return e};
+const hit=(x,y,z,w,h,d,fn)=>cl(B(x,y,z,w,h,d,'opacity:0;transparent:true'),typeof fn==='string'?()=>L.toast(fn,6500):fn);
+/* shell */
+mk('a-plane',{position:'0 0 21',rotation:'-90 0 0',width:5,height:28,material:{src:fs,repeat:'2.5 14',roughness:.45,metalness:.5}});
+mk('a-plane',{position:'0 4 21',rotation:'90 0 0',width:5,height:28,material:M('#0d1417')});
+[[-2.5,90],[2.5,-90]].forEach(([x,r])=>mk('a-plane',{position:`${x} 2 21`,rotation:`0 ${r} 0`,width:28,height:4,material:{src:ws,repeat:'14 1.6',roughness:.85,metalness:.2}}));
+mk('a-plane',{position:'0 2 35',rotation:'0 180 0',width:5,height:4,material:{src:ws,repeat:'2.5 1.6',roughness:.85,metalness:.2}});
+[-2.46,2.46].forEach(x=>{B(x,.07,21,.06,.1,28,E('#1ec8ff',.9));B(x,3.5,21,.06,.07,28,E('#ff9d1a',.7));B(x,.4,21,.06,.5,28,M('#0b1215'));mk('a-cylinder',{position:`${x*.92} 3.7 21`,rotation:'90 0 0',radius:.07,height:28,material:M(x<0?'#4a5e66':'#6b7f88')})});
+const strips=[10,14,18,22,26,30,33.5].map(z=>B(0,3.95,z,1.6,.05,.4,E('#eaf8ff',.05)));
+const lamps=[12,22,31].map(z=>mk('a-entity',{position:`0 3.4 ${z}`,light:'type:point;color:#dff4ff;intensity:0;distance:14;decay:2'}));
+/* decorative lab doors (locked) */
+const door=(side,z,label,msg)=>{const x=side*2.45,d=-side;B(x,1.15,z,.1,2.3,1.3,M('#141d21'));B(x+d*.04,1.1,z,.06,2.1,1.1,M('#2a363c','metalness:.6'));mk('a-plane',{position:`${x+d*.075} 1.6 ${z}`,rotation:`0 ${d*90} 0`,width:.5,height:.4,material:'color:#0a1418;emissive:#0e2a33;emissiveIntensity:.6'});mk('a-sphere',{position:`${x+d*.08} 1.15 ${z+.45}`,radius:.03,material:E('#ff3b4e',1.5)});T(label,x+d*.09,2.4,z,d*90,1.7,'#ffd25a');hit(x+d*.1,1.1,z,.3,2.3,1.3,msg)};
+[[9.5,'BIO STORAGE','Locked. Through the glass: shelves of sample jars, all empty.'],[14.5,'CRYO LAB 2','Locked. Frost covers the window from the inside.'],[20,'DECON A','Locked. You can hear a shower still running inside.'],[25,'SPECIMEN ARCHIVE','Locked. A sticker reads: "Project 07 files - DESTROYED".'],[31,'SERVER ROOM','Locked. A fan is spinning somewhere behind the door.']].forEach(([z,l,m])=>door(-1,z,l,m));
+[[9.5,'STAFF LOUNGE','Locked. A TV flickers inside. The coffee machine blinks "OUT OF ORDER".'],[14.5,'DR. VOSS — OFFICE','Locked. A child\'s drawing is taped to the door: a stick man holding a little girl\'s hand. "Come home, Daddy."'],[20,'DECON B','Locked. The window is smeared with green handprints.'],[25,'CLEAN ROOM 3','Locked. A warning light inside says: CONTAMINATED.'],[31,'SAFETY OFFICE','Locked. A sign reads: "Report all leaks. Even small ones."']].forEach(([z,l,m])=>door(1,z,l,m));
+/* gates */
+const gate=(z,label)=>{const g=B(0,1.8,z,5,3.6,.2,M('#202c31','metalness:.7'));for(let i=0;i<6;i++)B(0,-1.5+i*.6,-.12,4.9,.1,.02,i%2?E('#ffa51f',.5):M('#111'),0,g);T(label,0,1.5,-.13,180,3,'#ffd25a',g);for(let i=0;i<14;i++)B(-1.4+i*.2,.012,z-.5,.2,.01,.14,i%2?M('#111'):E('#ffa51f',.6));return g};
+const g1=gate(17,'SECURITY GATE 1'),g2=gate(27,'SECURITY GATE 2');
+/* fuse box + lamps (puzzle 1) */
+B(-2.4,1.15,11.5,.14,.9,.75,M('#2a363c','metalness:.5'));B(-2.32,1.15,11.5,.02,.8,.65,M('#10181b'));T('FUSE BOX — HALL POWER',-2.36,2.8,11.5,90,1.8,'#ffd25a');
+[['#2ee58a',2.45],['#2d8cff',2.2],['#ff3b4e',1.95]].forEach(([c,y])=>mk('a-sphere',{position:`-2.38 ${y} 11.5`,radius:.06,material:E(c,2.4)}));
+/* gate keypad (puzzle 2) and exit keypad (puzzle 3) */
+B(2.4,1.3,26.2,.12,.5,.4,M('#10181b'));mk('a-plane',{position:'2.33 1.4 26.2',rotation:'0 -90 0',width:.3,height:.15,material:E('#0f6b4a',1)});T('GATE 2\nKEYPAD',2.32,1.85,26.2,-90,1.2,'#ffd25a');
+B(1.8,1.3,34.9,.4,.5,.12,M('#10181b'));mk('a-plane',{position:'1.8 1.4 34.83',rotation:'0 180 0',width:.3,height:.15,material:E('#0f6b4a',1)});T('EXIT\nKEYPAD',1.8,1.85,34.8,180,1.2,'#ffd25a');
+const exitD=B(0,1.5,34.88,2.4,3,.2,M('#2a3a42','metalness:.7'));for(let i=0;i<5;i++)B(0,-1.2+i*.6,-.12,2.3,.08,.02,i%2?E('#ffa51f',.4):M('#111'),0,exitD);
+B(0,3.45,34.8,1,.28,.05,E('#1f9d5c',1.5));T('EXIT',0,3.45,34.76,180,1.3,'#eafff2');
+const outside=mk('a-plane',{position:'0 1.5 35.4',rotation:'0 180 0',width:3,height:3.4,visible:false,material:'color:#fffbe8;emissive:#fffbe8;emissiveIntensity:2.2;shader:flat'});
+/* clue signs */
+mk('a-plane',{position:'-2.47 1.9 22.5',rotation:'0 90 0',width:1.5,height:1.1,material:M('#3a0f14')});T('BREACH LOG\n\nAlarm triggered at 03:14\n(the clock in Lab 07\nstopped at that time)\n\nGATE 2 CODE = BREACH TIME\n4 digits, no colon',-2.45,1.9,22.5,90,1.3,'#ffd9d9');
+mk('a-plane',{position:'2.47 1.9 29',rotation:'0 -90 0',width:1.5,height:1.3,material:M('#e8edf0')});T('ATOMIC NUMBERS\n1 H   2 He   3 Li\n4 Be   5 B   6 C\n7 N   8 O   9 F\n10 Ne\n\nEXIT LOCK = atomic numbers of\nthe 3 sequencer elements\n(lab slots, left to right)',2.45,1.9,29,-90,1.35,'#10181b');
+T('SUBLEVEL 4 — EAST CORRIDOR',-2.45,3.0,8.2,90,2.2,'#6b8f9a');T('QUARANTINE ZONE',2.45,3.0,17.2,-90,2,'#ff5e6c');
+/* props: gurney, extinguisher, floor arrows, slime footprints */
+B(1.6,.4,22.3,.7,.1,1.9,M('#9aa4a6'));B(1.6,.5,22.3,.66,.12,1.8,M('#dfe8ea'));[[-.3,-.85],[.3,-.85],[-.3,.85],[.3,.85]].forEach(([x,z])=>mk('a-cylinder',{position:`${1.6+x} .18 ${22.3+z}`,radius:.025,height:.36,material:M('#6b7f88')}));mk('a-circle',{position:'1.6 .565 22.1',rotation:'-90 0 0',radius:.2,material:'color:#2a6a3a;emissive:#1a4a28;emissiveIntensity:.5'});
+hit(1.6,.6,22.3,.8,.5,2,'An empty gurney. The straps have been torn open.');
+mk('a-cylinder',{position:'-2.38 1.0 16.2',radius:.09,height:.45,material:M('#c9303f')});
+[9,18.5,28.5].forEach(z=>mk('a-text',{value:'▼ EXIT ▼',position:`0 .02 ${z}`,rotation:'-90 180 0',align:'center',width:3,color:'#ffa51f'}));
+for(let z=8,i=0;z<34;z+=1.3,i++)mk('a-circle',{position:`${i%2?.35:-.35} .02 ${z}`,rotation:'-90 0 0',radius:.11,scale:'1 1.7 1',material:'color:#39ff88;emissive:#39ff88;emissiveIntensity:.8;opacity:.55;transparent:true'});
+window.HB=[[1.25,1.95,21.3,23.3]];
+/* puzzle windows */
+const pin=(title,sub,len,code,ok)=>{let v='';L.openM(title,sub,c=>{const d=document.createElement('div');d.className='disp';d.textContent=Array(len).fill('_').join(' ');c.appendChild(d);const up=bad=>{d.textContent=v.padEnd(len,'_').split('').join(' ');d.classList.toggle('wrong',!!bad)};const g=document.createElement('div');g.className='grid';[1,2,3,4,5,6,7,8,9,'⌫',0,'↵'].forEach(k=>L.btn(k,()=>{if(k==='⌫')v=v.slice(0,-1);else if(k==='↵'){if(v===code){L.closeM();ok()}else{up(1);L.snd('error');L.cont(2);setTimeout(()=>{v='';up()},500)}return}else if(v.length<len)v+=k;up()},'',g));c.appendChild(g)})};
+const fuses=()=>{let q=[];const need=['green','blue','red'];L.openM('FUSE BOX','Press the fuses in the same order as the lamps on the wall (top to bottom).',c=>{const r=document.createElement('div');r.className='row';[['red','#ff3b4e'],['green','#2ee58a'],['blue','#2d8cff']].forEach(([n,col])=>{const b=L.btn(n.toUpperCase(),()=>{q.push(n);b.style.background=col;b.style.color='#041014';if(n!==need[q.length-1]){L.snd('error');L.cont(2);L.toast('Wrong fuse. The panel resets.');setTimeout(()=>{q=[];r.querySelectorAll('button').forEach(x=>{x.style.background='';x.style.color=''})},500);return}if(q.length===3){L.closeM();powerUp()}},'',r)});c.appendChild(r)})};
+hit(-2.3,1.15,11.5,.2,.9,.9,()=>{if(ph!==1)return L.toast('The fuse box is already working.');fuses()});
+hit(2.3,1.3,26.2,.2,.6,.5,()=>{if(ph<2)return L.toast('Locked. Light the hallway first.');if(ph>2)return L.toast('This gate is already open.');pin('GATE 2 KEYPAD','Enter the 4-digit breach time from the BREACH LOG sign.',4,'0314',gate2)});
+hit(1.8,1.3,34.8,.5,.6,.2,()=>{if(ph<3)return L.toast('Locked. Open the gate first.');pin('EXIT KEYPAD','Enter the 3 atomic numbers (sequencer slots, left to right).',3,'293',finish)});
+/* the story beats */
+let ph=0,fl;
+const open=(g,y)=>g.setAttribute('animation',`property:position;to:0 ${y} ${g.getAttribute('position').z};dur:1800;easing:easeInOutQuad`);
+function powerUp(){ph=2;window.DARK=false;clearInterval(fl);strips.forEach(e=>e.setAttribute('material','emissiveIntensity',1.6));lamps.forEach(l=>l.setAttribute('light','intensity',1));open(g1,5.6);window.HE=26.4;L.snd('power');L.toast('The lights come on and Gate 1 rumbles open!',5000);L.setStage('GATE LOCK','Open the second gate.')}
+function gate2(){ph=3;open(g2,5.6);window.HE=34.4;L.snd('success');L.toast('Gate 2 is open! The exit is at the end of the corridor.',5000);L.setStage('FINAL EXIT','Open the exit door.')}
+function finish(){ph=4;L.snd('success');open(exitD,5);outside.setAttribute('visible',true);L.toast('The exit door opens. Daylight!',5000);setTimeout(()=>L.end('#successOverlay','success'),2600)}
+window.HALL={start(){if(ph)return;ph=1;L.st.stage='hall';L.cont(Math.min(0,20-L.st.cont));const k=[...W.children];
+ const blast=k.find(e=>e.tagName==='A-BOX'&&+e.getAttribute('width')===4.2&&+e.getAttribute('height')===3.2);
+ k.filter(e=>e.tagName==='A-BOX'&&+e.getAttribute('width')===4.1&&+e.getAttribute('height')===.08).forEach(e=>e.setAttribute('visible',false));
+ const fin=k.find(e=>e.tagName==='A-ENTITY'&&e.getAttribute('position')&&e.getAttribute('position').z===6.78&&e.getAttribute('position').y===1.3);if(fin)fin.setAttribute('visible',false);
+ const gd=k.find(e=>e.tagName==='A-PLANE'&&+e.getAttribute('height')===3.6);if(gd)gd.setAttribute('visible',false);
+ k[3].setAttribute('visible',false);const mw=(x,y,wd,ht,rx,ry)=>mk('a-plane',{position:`${x} ${y} 7`,rotation:'0 180 0',width:wd,height:ht,material:{src:ws,repeat:`${rx} ${ry}`,roughness:.85,metalness:.2}},W);
+ mw(-4.55,2.5,4.9,5,2.45,2);mw(4.55,2.5,4.9,5,2.45,2);mw(0,4.15,4.2,1.7,2.1,.68);
+ if(blast)blast.setAttribute('animation','property:position;to:0 4.9 6.95;dur:2200;easing:easeInOutQuad');
+ window.HO=true;window.HE=16.4;window.DARK=true;sc.setAttribute('fog','type:exponential;color:#010306;density:.2');HW.setAttribute('visible',true);
+ L.snd('power');L.toast('The blast door slides open. Beyond it, the hallway is pitch black.',6000);L.setStage('HALLWAY POWER','Find the fuse box in the dark hallway.');
+ let n=0;fl=setInterval(()=>{const e=strips[Math.random()*3|0];e.setAttribute('material','emissiveIntensity',1.4);setTimeout(()=>e.setAttribute('material','emissiveIntensity',.05),90)},2600)}};
 }})();
 </script>
 
